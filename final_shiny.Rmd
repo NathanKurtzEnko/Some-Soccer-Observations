@@ -1,0 +1,133 @@
+---
+title: "Some Soccer Observations"
+author: "Shaoze and Nathan"
+runtime: shiny
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(ggplot2)
+our_data <- read_csv("data folder/soccer_data.csv") %>%
+  rename(interceptions_pg = `Interceptions pg`)
+
+```
+
+## Best skills
+
+```{r eruptions}
+inputPanel(
+  selectInput("skill", label = "Skill:",
+              choices = c("prop_shots_on", "passing", "dribbles_pp_pg", "goals_pg", "`interceptions_pg`"), selected = "prop_shots_on"),
+  selectInput("league", label = "League:",
+              choices = c("EPL", "MLS", "La Liga", "Ligue 1", "Serie A", "Bundesliga"), selected = "EPL")
+)
+
+renderPlot({
+    our_data1 <- our_data %>%
+      filter(league == input$league)
+    ggplot(our_data1, aes_string(x = "club", y = input$skill))+
+      geom_bar(stat = "identity")+
+      coord_flip()
+})
+```
+
+## Most Physical
+
+```{r}
+inputPanel(
+  selectInput("stat", label = "Stat:",
+              choices = c("yellow_card", "red_card", "AerialsWon", "tackles_pg", "fouls_pg", "goals_pg"), selected = "yellow_card"),
+  selectInput("league2", label = "League:",
+              choices = c("EPL", "MLS", "La Liga", "Ligue 1", "Serie A", "Bundesliga"), selected = "EPL"))
+
+renderPlot({
+  our_data1 <- our_data %>%
+    filter(league == input$league2)
+  ggplot(our_data1, aes_string(x = "club", y = input$stat))+
+    geom_bar(stat = "identity")+
+    coord_flip()
+})
+```
+
+## Monetary Influence
+
+```{r}
+inputPanel(
+  selectInput("skill2", label = "Skill:",
+              choices = c("passing", "possession", "shots_on", "prop_shots_on"), selected = "passing"),
+  selectInput("league3", label = "League:",
+              choices = c("EPL", "MLS", "La Liga", "Ligue 1", "Serie A", "Bundesliga"), selected = "EPL"),
+  checkboxInput("label", "Do not want club names?", value = FALSE))
+
+renderPlot({
+  our_data1 <- our_data %>%
+    filter(league == input$league3)
+  p<-ggplot(our_data1, aes_string(x = "avg_plyr_salary", y = input$skill2))+
+    geom_point()+
+    geom_smooth(method = "lm")+
+    coord_flip()
+  
+  if (!input$label)
+    p + ggrepel::geom_label_repel(aes(label = club), data = our_data1,
+                              show.legend = FALSE)
+  else if (input$label)
+    p
+})
+```
+
+## Monetary Influence comparing leagues
+
+```{r}
+inputPanel(
+  selectInput("stat2", label = "Stat:",
+              choices = c("passing", "shots_on", "shots_off",
+                          "prop_shots_on", "`interceptions_pg`","yellow_card",
+                          "red_card", "AerialsWon", "tackles_pg", "fouls_pg",
+                          "goals_pg"),
+              selected = "passing"))
+renderPlot({
+  our_data2 <- our_data %>%
+    group_by(league) %>%
+    summarise(mean_sal = mean(avg_plyr_salary),
+              passing = mean(passing),
+              shots_on = mean(shots_on),
+              `interceptions_pg` = mean(`interceptions_pg`),
+              prop_shots_on = mean(prop_shots_on),
+              shots_off = mean(shots_off),
+              red_card = mean(red_card),
+              yellow_card = mean(yellow_card),
+              AerialsWon = mean(AerialsWon),
+              goals_pg = mean(goals_pg),
+              tackles_pg = mean(tackles_pg),
+              fouls_pg = mean(fouls_pg)
+    )
+  ggplot(our_data2, aes_string(x = "mean_sal", y = input$stat2, color = "league"))+
+    geom_point(size = 9)
+  })
+```
+
+## Relationships
+
+```{r}
+inputPanel(
+  selectInput("xaxis", label = "X axis:",
+              choices = colnames(our_data)),
+  selectInput("yaxis", label = "Y axis:",
+              choices = colnames(our_data)),
+  selectInput("league4", label = "League:",
+              choices = c("EPL", "MLS", "La Liga", "Ligue 1", "Serie A", "Bundesliga"), selected = "EPL")
+  )
+
+renderPlot({
+  our_data7 <- our_data %>%
+    filter(league == input$league4)
+  ggplot(our_data7, aes_string(x = input$xaxis, y = input$yaxis))+
+    geom_point()+
+    geom_smooth()+
+    ggrepel::geom_label_repel(aes(label = club), data = our_data7, show.legend = FALSE)
+})
+```
+
+

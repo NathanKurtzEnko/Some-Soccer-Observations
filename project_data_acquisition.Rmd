@@ -1,0 +1,635 @@
+---
+title: "Final Project"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(stringr)
+library(rvest)
+library(httr)
+library(ggrepel)
+```
+
+##Shaoze's Work
+```{r}
+premier <- read_html("https://www.whoscored.com/Regions/252/Tournaments/2/Seasons/7361/Stages/16368/TeamStatistics/England-Premier-League-2018-2019")
+
+premier %>%
+  html_nodes("#top-team-stats-summary-content .td") %>%
+  html_text()
+
+salary<-read_html("https://www.marca.com/en/football/spanish-football/2018/09/13/5b9a688846163f69298b4643.html")
+
+salary1 <- salary %>%
+  html_nodes(".alt-colors li") %>%
+  html_text() %>% 
+  str_split(' (?=[^ ]+$)')
+
+salaries <- salary %>%
+  html_nodes(".alt-colors li") %>%
+  html_text() %>%
+  str_extract("\\.*\\d+\\.*\\d*\\.*\\d*") %>%
+  str_replace("\\.","") %>% 
+  str_replace("\\.","") %>%
+  as.numeric()
+
+for (i in 1:20){
+  name[i]=salary1[[i]][1]
+  }
+
+data <- tibble(name,salaries)
+
+data %>%
+  mutate(name = fct_reorder(name, salaries)) %>%
+  ggplot(mapping = aes(x=salaries,y=name))+
+  geom_point()
+```
+```{r}
+League1 <- read_html("https://www.fctables.com/france/ligue-1/ball-possession/")
+
+League1_name<-League1 %>%
+  html_nodes("td.tl") %>%
+  html_text()
+
+League1_possession<-League1 %>%
+  html_nodes("td:nth-child(4)") %>%
+  html_text()
+
+League1<-tibble(name=League1_name,possession=parse_number(League1_possession))
+
+France <- read_html("https://www.fctables.com/france/ligue-1/shots/")
+
+France_name<-France %>%
+  html_nodes("td.tl") %>%
+  html_text()
+
+France_shots_on<-France %>%
+  html_nodes("td:nth-child(5)") %>%
+  html_text()
+
+France_shots_off<-France%>%
+  html_nodes(".border-right:nth-child(7)") %>%
+  html_text()
+
+France<-tibble(name=France_name,shots_on=parse_number(France_shots_on),shots_off=parse_number(France_shots_off))%>%
+  mutate(shots = shots_on + shots_off,
+         name = str_replace(name,"Mon",ifelse(shots_on==4.38,"Montpellier", "Monaco")),
+         name = str_replace(name,"Dij","Dijon"),
+         name = str_replace(name,"Lyo","Lyon"),
+         name = str_replace(name,"Mar","Marseille"),
+         name = str_replace(name,"Sai","Saint-Etienne"),
+         name = str_replace(name,"Nic","Nice"),
+         name = str_replace(name,"Lil","Lille"),
+         name = str_replace(name,"Nan","Nantes"),
+         name = str_replace(name,"Str","Strasbourg"),
+         name = str_replace(name,"Ami","Amiens"),
+         name = str_replace(name,"Ren","Rennes"),
+         name = str_replace(name,"Bor","Bordeaux"),
+         name = str_replace(name,"Nim","Nimes"),
+         name = str_replace(name,"Gui","Guingamp"),
+         name = str_replace(name,"Tou","Toulouse"),
+         name = str_replace(name,"Rei","Reims"),
+         name = str_replace(name,"Cae","Caen"),
+         name = str_replace(name,"Ang","Angers"))%>%
+  left_join(League1)
+
+print(France)
+```
+
+```{r}
+Premier<-read_html("https://www.fctables.com/england/premier-league/ball-possession/")
+
+Premier_name<-Premier%>%
+  html_nodes("td.tl")%>%
+  html_text()
+
+Premier_possession<-Premier%>%
+  html_nodes("td:nth-child(4)")%>%
+  html_text()
+
+Premier<-tibble(name = Premier_name,possession = parse_number(Premier_possession))
+
+England <- read_html("https://www.fctables.com/england/premier-league/shots/")
+
+England_name<-England %>%
+  html_nodes("td.tl") %>%
+  html_text()
+
+England_shots_on<-England %>%
+  html_nodes("td:nth-child(5)") %>%
+  html_text()
+
+England_shots_off<-England%>%
+  html_nodes(".border-right:nth-child(7)") %>%
+  html_text()
+
+England<-tibble(name=England_name,shots_on=parse_number(England_shots_on),shots_off=parse_number(England_shots_off))%>%
+  mutate(shots = shots_on + shots_off,
+         name = str_replace(name,"Man",ifelse(shots_on == 7.53,"Manchester City", "Manchester United")),
+         name = str_replace(name,"Cry","Crystal Palace"),
+         name = str_replace(name,"New","Newcastle United"),
+         name = str_replace(name,"Wes","West Ham"),
+         name = str_replace(name,"Wol","Wolverhampton Wanderers"),
+         name = str_replace(name,"Car","Cardiff"),
+         name = str_replace(name,"Hud","Huddersfield"),
+         name = str_replace(name,"Ful","Fulham"),
+         name = str_replace(name,"Bur","Burnley"),
+         name = str_replace(name,"Sou","Southampton"),
+         name = str_replace(name,"Wat","Watford"),
+         name = str_replace(name,"Bri","Brighton"),
+         name = str_replace(name,"Che","Chelsea"),
+         name = str_replace(name,"Tot","Tottenham"),
+         name = str_replace(name,"Liv","Liverpool"),
+         name = str_replace(name,"Ars","Arsenal"),
+         name = str_replace(name,"Eve","Everton"),
+         name = str_replace(name,"Lei","Leicester"),
+         name = str_replace(name,"Bou","Bournemouth" ))%>%
+  left_join(Premier)
+
+print(England)
+```
+
+```{r}
+Serie_A<-read_html("https://www.fctables.com/italy/serie-a/ball-possession/")
+
+Serie_A_name<-Serie_A%>%
+  html_nodes("td.tl")%>%
+  html_text()
+
+Serie_A_possession<-Serie_A%>%
+  html_nodes("td:nth-child(4)")%>%
+  html_text()
+
+Serie_A<-tibble(name=Serie_A_name,possession=parse_number(Serie_A_possession))%>%
+  mutate(name = str_replace(name,"SPAL 2013","SPA"))
+
+Italy <- read_html("https://www.fctables.com/italy/serie-a/shots/")
+
+Italy_name<-Italy %>%
+  html_nodes("td.tl") %>%
+  html_text()
+
+Italy_shots_on<-Italy %>%
+  html_nodes("td:nth-child(5)") %>%
+  html_text()
+
+Italy_shots_off<-Italy%>%
+  html_nodes(".border-right:nth-child(7)") %>%
+  html_text()
+
+Italy<-tibble(name=Italy_name,shots_on=parse_number(Italy_shots_on),shots_off=parse_number(Italy_shots_off))%>%
+  mutate(shots = shots_on + shots_off,
+         name = str_replace(name,"Spa","SPA"), 
+         name = str_replace(name,"Gen","Genoa"),
+         name = str_replace(name,"Cag","Cagliari"),
+         name = str_replace(name,"Fio","Fiorentina"),
+         name = str_replace(name,"Udi","Udinese"),
+         name = str_replace(name,"Emp","Empoli"),
+         name = str_replace(name,"Chi","Chievo"),
+         name = str_replace(name,"Fro","Frosinone"),
+         name = str_replace(name,"Bol","Bologna"),
+         name = str_replace(name,"Ata","Atalanta"),
+         name = str_replace(name,"Sam","Sampdoria"),
+         name = str_replace(name,"AC","AC Milan"),
+         name = str_replace(name,"Int","Inter"),
+         name = str_replace(name,"SSC","SSC Napoli"),
+         name = str_replace(name,"Laz","Lazio"),
+         name = str_replace(name,"Tor","Torino"),
+         name = str_replace(name,"SSD","SSD Parma"),
+         name = str_replace(name,"Sas","Sassuolo"),
+         name = str_replace(name,"Rom","Roma"),
+         name = str_replace(name,"Juv","Juventus"))%>%
+  left_join(Serie_A)
+
+Italy
+```
+
+```{r}
+Bundesliga<-read_html("https://www.fctables.com/germany/1-bundesliga/ball-possession/")
+
+Bundesliga_name<-Bundesliga%>%
+  html_nodes("td.tl")%>%
+  html_text()
+
+Bundesliga_possession<-Bundesliga%>%
+  html_nodes("td:nth-child(4)")%>%
+  html_text()
+
+Bundesliga<-tibble(name=Bundesliga_name,possession=parse_number(Bundesliga_possession))
+
+Germany <- read_html("https://www.fctables.com/germany/1-bundesliga/shots/")
+
+Germany_name<-Germany %>%
+  html_nodes("td.tl") %>%
+  html_text()
+
+Germany_shots_on<-Germany %>%
+  html_nodes("td:nth-child(5)") %>%
+  html_text()
+
+Germany_shots_off<-Germany%>%
+  html_nodes(".border-right:nth-child(7)") %>%
+  html_text()
+
+Germany<-tibble(name=Germany_name,shots_on=parse_number(Germany_shots_on),shots_off=parse_number(Germany_shots_off))%>%
+  mutate(shots = shots_on + shots_off,
+         name = str_replace(name,"Bay",ifelse(shots_on==5.00,"Bayer Leverkusen", "Bayern Munich")),
+         name = str_replace(name,"Fre","Freiburg"),
+         name = str_replace(name,"Sch","Schalke 04"),
+         name = str_replace(name,"Aug","Augsburg"),
+         name = str_replace(name,"Nue","Nuernberg"),
+         name = str_replace(name,"For","Fortuna Duesseldorf"),
+         name = str_replace(name,"Han","Hannover 96"),
+         name = str_replace(name,"VfB","VfB Stuttgart"),
+         name = str_replace(name,"FSV","FSV Mainz"),
+         name = str_replace(name,"Wer","Werder Bremen"),
+         name = str_replace(name,"Ras","RasenBallsport Leipzig"),
+         name = str_replace(name,"Bor",ifelse(shots_on==5.00,"Borussia Moenchengladbach","Borussia Dortmund")),
+         name = str_replace(name,"Ein","Eintracht Frankfurt"),
+         name = str_replace(name,"Hof","Hoffenheim"),
+         name = str_replace(name,"Wol","Wolfsburg"),
+         name = str_replace(name,"Her","Hertha Berlin"))%>%
+  left_join(Bundesliga)
+
+print(Germany)
+```
+
+```{r}
+La_liga<-read_html("https://www.fctables.com/spain/liga-bbva/ball-possession/")
+
+La_liga_name<-La_liga%>%
+  html_nodes("td.tl")%>%
+  html_text()
+
+La_liga_possession<-La_liga%>%
+  html_nodes("td:nth-child(4)")%>%
+  html_text()
+
+La_liga<-tibble(name=La_liga_name,possession=parse_number(La_liga_possession))
+
+Spain <- read_html("https://www.fctables.com/spain/liga-bbva/shots/")
+
+Spain_name<-Spain %>%
+  html_nodes("td.tl") %>%
+  html_text()
+
+Spain_shots_on<-Spain %>%
+  html_nodes("td:nth-child(5)") %>%
+  html_text()
+
+Spain_shots_off<-Spain%>%
+  html_nodes(".border-right:nth-child(7)") %>%
+  html_text()
+
+Spain<-tibble(name=Spain_name,shots_on=parse_number(Spain_shots_on),shots_off=parse_number(Spain_shots_off))%>%
+  mutate(shots = shots_on + shots_off,
+         name = str_replace(name,"Val",ifelse(shots_on==3.57,"Valladolid", "Valencia")),
+         name = str_replace(name,"Cel","Celta Vigo"),
+         name = str_replace(name,"Eib","Eibar"),
+         name = str_replace(name,"Leg","Leganes"),
+         name = str_replace(name,"Vil","Villarreal"),
+         name = str_replace(name,"Hue","Huesca"),
+         name = str_replace(name,"Ray","Rayo Vallecano"),
+         name = str_replace(name,"Ath","Athletic Bilbao"),
+         name = str_replace(name,"Rea",ifelse(shots_on==3.64,"Real Sociedad","Real Betis")),
+         name = str_replace(name,"Real Betis",ifelse(shots_on==5.07,"Real Madrid","Real Betis")),
+         name = str_replace(name,"Ala","Alaves"),
+         name = str_replace(name,"Atl","Atletico Madrid"),
+         name = str_replace(name,"Sev","Sevilla"),
+         name = str_replace(name,"Lev","Levante"),
+         name = str_replace(name,"Get","Getafe"),
+         name = str_replace(name,"Esp","Espanyol"),
+         name = str_replace(name,"Gir","Girona"),
+         name = str_replace(name,"Bar","Barcelona"))%>%
+  left_join(La_liga)
+
+print(Spain)
+```
+
+```{r}
+Spain_last<-tribble(
+  ~club, ~possession,~average_shots,~shots_on_goal,
+  "FC Barcelona",61.87,14.97,7.13,
+  "Getafe C.F.",41.13,9.37,3.58,
+  "Club Atlético de Madrid",47.84,10.37,4.16,
+  "S.D. Eibar",53.63,12.13,4.16,
+  "Real Madrid C.F.",58.08,17.95,7.47,
+  "Real Sociedad",56.61,13.21,4.53,
+  "Villarreal C.F.",49.37,11.95,4.63,
+  "Sevilla FC",52.58,13.13,4.95,
+  "Real Betis",55.76,10.45,4.34,
+  "CD Leganés",43.00,10.18,3.63,
+  "RC Celta de Vigo",54.45,10.95,4.03,
+  "Valencia C.F.",48.97,11.92,4.89,
+  "RCD Espanyol",46.42,10.53,3.61,
+  "Athletic Bilbao",50.84,11.00,4.18,
+  "Málaga C.F.",43.97,10.34,3.18,
+  "Girona FC",48.34,11.32,4.16,
+  "Deportivo Alavés",41.08,9.82,3.58,
+  "Levante UD",44.37,10.55,3.42,
+  "Deportivo de La Coruña",47.47,11.92,3.89,
+  "UD Las Palmas",54.53,10.47,3.37
+)
+
+View(Spain_last)
+```
+
+##Nathan's Work
+```{r MLS}
+url_mls <- "https://www.statista.com/statistics/551765/average-player-salary-in-mls-by-team/"
+url_mls_team_stats_2018 <- "https://www.fctables.com/usa/major-league-soccer/"
+
+data_mls <- read_html(url_mls)
+table_mls <- html_nodes(data_mls, css = "table")
+mls_salary <- html_table(table_mls, fill = TRUE)[[1]]
+colnames(mls_salary) <- c("club", "avg_plyr_salary")
+#mls_salary <- slice(mls_salary, 1:18)
+mls_salary <- as.tibble(mls_salary)
+
+mls_team_stats_data <- read_html(url_mls_team_stats_2018)
+mls_team_stats <- html_nodes(mls_team_stats_data, ".responsive:nth-child(2) .added:nth-child(9) , .responsive:nth-child(2) .added:nth-child(8) , .responsive:nth-child(2) .added:nth-child(7) , .responsive:nth-child(2) .added:nth-child(6) , .responsive:nth-child(2) .added:nth-child(5) , .goals_d , .goals , .defeits , .draws , .wins , .points , .responsive:nth-child(2) .added:nth-child(4) , td.tl")
+mls_summary_stats <- html_text(mls_team_stats)
+
+mls_summary <- tibble(club = character(), points = integer(), wins = integer(), draws = integer(), losses = integer(), goals_for = integer(), goals_against = integer())
+for(i in 1:23) {
+  mls_summary[i,1] <- mls_summary_stats[7*i-6]
+  mls_summary[i,2] <- mls_summary_stats[7*i-5]
+  mls_summary[i,3] <- mls_summary_stats[7*i-4]
+  mls_summary[i,4] <- mls_summary_stats[7*i-3]
+  mls_summary[i,5] <- mls_summary_stats[7*i-2]
+  mls_summary[i,6] <- mls_summary_stats[7*i-1]
+  mls_summary[i,7] <- mls_summary_stats[7*i]
+}
+mls_summary <- mls_summary %>%
+  mutate(points = as.numeric(points),
+         wins = as.numeric(wins),
+         draws = as.numeric(draws),
+         losses = as.numeric(losses),
+         goals_for = as.numeric(goals_for),
+         goals_against = as.numeric(goals_against),
+         games_played = wins+draws+losses,
+         club = str_remove_all(club, '("|\\r\\n\\s*)'),
+         club = str_replace(club, "Dallas Burn", "FC Dallas"),
+         club = str_replace(club, "Impact De Montreal", "Montreal Impact"),
+         club = str_replace(club, "Orlando City", "Orlando City SC"),
+         club = str_replace(club, "Minnesota United", "Minnesota United FC"),
+         club = str_replace(club, "New England Rev.", "New England Revolution"),
+         club = str_replace(club, "Vancouver Whitecaps", "Vancouver Whitecaps FC"),
+         club = str_replace(club, "DC United", "D.C. United"),
+         club = str_replace(club, "Columbus Crew", "Columbus Crew SC"))
+
+mls <- left_join(mls_summary, mls_salary)
+```
+
+```{r LaLiga}
+url_LaLiga <- "https://www.statista.com/statistics/675461/average-la-liga-salary-by-team/"
+url_laliga_team_stats <- "https://www.fctables.com/spain/liga-bbva/2017_2018/"
+
+data_LaLiga <- read_html(url_LaLiga)
+table_LaLiga <- html_nodes(data_LaLiga, css = "table")
+LaLiga_salary <- html_table(table_LaLiga, fill = TRUE)[[1]]
+colnames(LaLiga_salary) <- c("club", "avg_plyr_salary")
+LaLiga_salary <- as.tibble(LaLiga_salary) %>%
+  #slice(1:18) %>%
+  mutate(avg_plyr_salary = avg_plyr_salary*1000)
+
+laliga_team_stats_data <- read_html(url_laliga_team_stats)
+laliga_team_stats <- html_nodes(laliga_team_stats_data, ".added:nth-child(9) , .added:nth-child(8) , .added:nth-child(7) , .added:nth-child(6) , .added:nth-child(5) , .goals_d , .goals , .defeits , .draws , .wins , .points , .added:nth-child(4) , .tl")
+laliga_summary_stats <- html_text(laliga_team_stats)
+
+laliga_summary <- tibble(club = character(), points = integer(), wins = integer(), draws = integer(), losses = integer(), goals_for = integer(), goals_against = integer())
+for(i in 1:20) {
+  laliga_summary[i,1] <- laliga_summary_stats[7*i-5]
+  laliga_summary[i,2] <- laliga_summary_stats[7*i-4]
+  laliga_summary[i,3] <- laliga_summary_stats[7*i-3]
+  laliga_summary[i,4] <- laliga_summary_stats[7*i-2]
+  laliga_summary[i,5] <- laliga_summary_stats[7*i-1]
+  laliga_summary[i,6] <- laliga_summary_stats[7*i]
+  laliga_summary[i,7] <- laliga_summary_stats[7*i+1]
+}
+laliga_summary <- laliga_summary %>%
+  mutate(points = as.numeric(points),
+         wins = as.numeric(wins),
+         draws = as.numeric(draws),
+         losses = as.numeric(losses),
+         goals_for = as.numeric(goals_for),
+         goals_against = as.numeric(goals_against),
+         games_played = wins+draws+losses,
+         club = str_remove_all(club, '("|\\r\\n\\s*)'),
+         club = str_replace(club, "Barcelona", "FC Barcelona"),
+         club = str_replace(club, "Atletico Madrid", "Club Atlético de Madrid"),
+         club = str_replace(club, "Real Madrid", "Real Madrid C.F."),
+         club = str_replace(club, "Valencia", "Valencia C.F."),
+         club = str_replace(club, "Sevilla", "Sevilla FC"),
+         club = str_replace(club, "Villarreal", "Villarreal C.F."),
+         club = str_replace(club, "Espanyol", "RCD Espanyol"),
+         club = str_replace(club, "Celta Vigo", "RC Celta de Vigo"),
+         club = str_replace(club, "Deportivo La Coruna", "Deportivo de La Coruña"),
+         club = str_replace(club, "Malaga", "Málaga C.F."),
+         club = str_replace(club, "Eibar", "S.D. Eibar"),
+         club = str_replace(club, "Girona", "Girona FC"),
+         club = str_replace(club, "Alaves", "Deportivo Alavés"),
+         club = str_replace(club, "Levante", "Levante UD"),
+         club = str_replace(club, "Leganes", "CD Leganés"),
+         club = str_replace(club, "Las Palmas", "UD Las Palmas"),
+         club = str_replace(club, "Getafe", "Getafe C.F.")
+         )
+
+LaLiga <- left_join(laliga_summary,LaLiga_salary)
+
+```
+
+```{r Ligue1}
+url_Ligue1 <- "https://www.statista.com/statistics/675528/average-ligue-1-salary-by-team/"
+url_ligue1_team_stats <- "https://www.fctables.com/france/ligue-1/2017_2018/"
+
+data_Ligue1 <- read_html(url_Ligue1)
+table_Ligue1 <- html_nodes(data_Ligue1, css = "table")
+Ligue1_salary <- html_table(table_Ligue1, fill = TRUE)[[1]]
+colnames(Ligue1_salary) <- c("club", "avg_plyr_salary")
+Ligue1_salary <- as.tibble(Ligue1_salary) %>%
+  #slice(1:18) %>%
+  mutate(avg_plyr_salary = avg_plyr_salary*1000)
+
+ligue1_team_stats_data <- read_html(url_ligue1_team_stats)
+ligue1_team_stats <- html_nodes(ligue1_team_stats_data, ".added:nth-child(9) , .added:nth-child(8) , .added:nth-child(7) , .added:nth-child(6) , .added:nth-child(5) , .goals_d , .goals , .defeits , .draws , .wins , .points , .added:nth-child(4) , .tl")
+ligue1_summary_stats <- html_text(ligue1_team_stats)
+
+ligue1_summary <- tibble(club = character(), points = integer(), wins = integer(), draws = integer(), losses = integer(), goals_for = integer(), goals_against = integer())
+for(i in 1:20) {
+  ligue1_summary[i,1] <- ligue1_summary_stats[7*i-5]
+  ligue1_summary[i,2] <- ligue1_summary_stats[7*i-4]
+  ligue1_summary[i,3] <- ligue1_summary_stats[7*i-3]
+  ligue1_summary[i,4] <- ligue1_summary_stats[7*i-2]
+  ligue1_summary[i,5] <- ligue1_summary_stats[7*i-1]
+  ligue1_summary[i,6] <- ligue1_summary_stats[7*i]
+  ligue1_summary[i,7] <- ligue1_summary_stats[7*i+1]
+}
+ligue1_summary <- ligue1_summary %>%
+  mutate(points = as.numeric(points),
+         wins = as.numeric(wins),
+         draws = as.numeric(draws),
+         losses = as.numeric(losses),
+         goals_for = as.numeric(goals_for),
+         goals_against = as.numeric(goals_against),
+         games_played = wins+draws+losses,
+         club = str_remove_all(club, '("|\\r\\n\\s*)'))
+
+Ligue1 <- left_join(ligue1_summary, Ligue1_salary)
+```
+
+```{r SerieA}
+url_SerieA <- "https://www.statista.com/statistics/675470/average-serie-a-salary-by-team/"
+url_seriea_team_stats <- "https://www.fctables.com/italy/serie-a/2017_2018/"
+
+data_SerieA <- read_html(url_SerieA)
+table_SerieA <- html_nodes(data_SerieA, css = "table")
+SerieA_salary <- html_table(table_SerieA, fill = TRUE)[[1]]
+colnames(SerieA_salary) <- c("club", "avg_plyr_salary")
+SerieA_salary <- as.tibble(SerieA_salary) %>%
+  #slice(1:18)%>%
+  mutate(avg_plyr_salary = avg_plyr_salary*1000,
+         club = str_replace(club, "Napoli", "SSC Napoli"),
+         club = str_replace(club, "Milan", "AC Milan"))
+
+seriea_team_stats_data <- read_html(url_seriea_team_stats)
+seriea_team_stats <- html_nodes(seriea_team_stats_data, ".added:nth-child(9) , .added:nth-child(8) , .added:nth-child(7) , .added:nth-child(6) , .added:nth-child(5) , .goals_d , .goals , .defeits , .draws , .wins , .points , .added:nth-child(4) , .tl")
+seriea_summary_stats <- html_text(seriea_team_stats)
+
+seriea_summary <- tibble(club = character(), points = integer(), wins = integer(), draws = integer(), losses = integer(), goals_for = integer(), goals_against = integer())
+for(i in 1:20) {
+  seriea_summary[i,1] <- seriea_summary_stats[7*i-5]
+  seriea_summary[i,2] <- seriea_summary_stats[7*i-4]
+  seriea_summary[i,3] <- seriea_summary_stats[7*i-3]
+  seriea_summary[i,4] <- seriea_summary_stats[7*i-2]
+  seriea_summary[i,5] <- seriea_summary_stats[7*i-1]
+  seriea_summary[i,6] <- seriea_summary_stats[7*i]
+  seriea_summary[i,7] <- seriea_summary_stats[7*i+1]
+}
+seriea_summary <- seriea_summary %>%
+  mutate(points = as.numeric(points),
+         wins = as.numeric(wins),
+         draws = as.numeric(draws),
+         losses = as.numeric(losses),
+         goals_for = as.numeric(goals_for),
+         goals_against = as.numeric(goals_against),
+         games_played = wins+draws+losses,
+         club = str_remove_all(club, '("|\\r\\n\\s*)'),
+         club = str_replace(club, "Inter", "Internazionale"),
+         club = str_replace(club, "SPAL 2013", "SPAL"),
+         club = str_replace(club, "Verona", "Hellas Verona"))
+
+SerieA <- left_join(seriea_summary, SerieA_salary)
+```
+
+```{r EPL}
+url_epl <- "https://www.statista.com/statistics/675303/average-epl-salary-by-team/"
+url_epl_team_stats <- "https://www.fctables.com/england/premier-league/2017_2018/"
+
+data_epl <- read_html(url_epl)
+table_epl <- html_nodes(data_epl, css = "table")
+epl_salary <- html_table(table_epl, fill = TRUE)[[1]]
+colnames(epl_salary) <- c("club", "avg_plyr_salary")
+epl_salary <- as.tibble(epl_salary) %>%
+  #slice(1:18) %>%
+  mutate(avg_plyr_salary = as.numeric(avg_plyr_salary)*1000,
+         club = str_replace(club, "Man Utd", "Manchester United"),
+         club = str_replace(club, "Man City", "Manchester City"),
+         club = str_replace(club, "Newcastle", "Newcastle United"),
+         club = str_replace(club, "West Brom", "West Bromwich Albion"))
+  
+epl_team_stats_data <- read_html(url_epl_team_stats)
+epl_team_stats <- html_nodes(epl_team_stats_data, ".added:nth-child(9) , .added:nth-child(8) , .added:nth-child(7) , .added:nth-child(6) , .added:nth-child(5) , .goals_d , .goals , .defeits , .draws , .wins , .points , .added:nth-child(4) , .tl")
+epl_summary_stats <- html_text(epl_team_stats)
+
+epl_summary <- tibble(club = character(), points = integer(), wins = integer(), draws = integer(), losses = integer(), goals_for = integer(), goals_against = integer())
+for(i in 1:20) {
+  epl_summary[i,1] <- epl_summary_stats[7*i-5]
+  epl_summary[i,2] <- epl_summary_stats[7*i-4]
+  epl_summary[i,3] <- epl_summary_stats[7*i-3]
+  epl_summary[i,4] <- epl_summary_stats[7*i-2]
+  epl_summary[i,5] <- epl_summary_stats[7*i-1]
+  epl_summary[i,6] <- epl_summary_stats[7*i]
+  epl_summary[i,7] <- epl_summary_stats[7*i+1]
+}
+epl_summary <- epl_summary %>%
+  mutate(points = as.numeric(points),
+         wins = as.numeric(wins),
+         draws = as.numeric(draws),
+         losses = as.numeric(losses),
+         goals_for = as.numeric(goals_for),
+         goals_against = as.numeric(goals_against),
+         games_played = wins+draws+losses,
+         club = str_remove_all(club, '("|\\r\\n\\s*)'))
+
+epl <- left_join(epl_summary, epl_salary)
+```
+
+```{r Bundesliga}
+url_bundesliga <- "https://www.statista.com/statistics/675490/average-bundesliga-salary-by-team/"
+url_bundesliga_team_stats <- "https://www.fctables.com/germany/1-bundesliga/2017_2018/"
+
+data_bundesliga <- read_html(url_bundesliga)
+table_bundesliga <- html_nodes(data_bundesliga, css = "table")
+bundesliga_salary <- html_table(table_bundesliga, fill = TRUE)[[1]]
+colnames(bundesliga_salary) <- c("club", "avg_plyr_salary")
+bundesliga_salary <- as.tibble(bundesliga_salary) %>%
+  mutate(avg_plyr_salary = avg_plyr_salary*1000,
+         club = str_replace(club, "Schalke", "Schalke 04"),
+         club = str_replace(club, "RB Leipzig", "RasenBallsport Leipzig"),
+         club = str_replace(club, "Borussia Monchengladbach", "Borussia Moenchengladbach"),
+         club = str_replace(club, "Mainz", "Mainz 05"),
+         club = str_replace(club, "Hamburg", "Hamburger SV"),
+         club = str_replace(club, "FC Koln", "FC Köln"),
+         club = str_replace(club, "Stuttgart", "VfB Stuttgart"))
+
+bundesliga_team_stats_data <- read_html(url_bundesliga_team_stats)
+bundesliga_team_stats <- html_nodes(bundesliga_team_stats_data, ".added:nth-child(9) , .added:nth-child(8) , .added:nth-child(7) , .added:nth-child(6) , .added:nth-child(5) , .goals_d , .goals , .defeits , .draws , .wins , .points , .added:nth-child(4) , .tl")
+bundesliga_summary_stats <- html_text(bundesliga_team_stats)
+
+bundesliga_summary <- tibble(club = character(), points = integer(), wins = integer(), draws = integer(), losses = integer(), goals_for = integer(), goals_against = integer())
+for(i in 1:18) {
+  bundesliga_summary[i,1] <- bundesliga_summary_stats[7*i-5]
+  bundesliga_summary[i,2] <- bundesliga_summary_stats[7*i-4]
+  bundesliga_summary[i,3] <- bundesliga_summary_stats[7*i-3]
+  bundesliga_summary[i,4] <- bundesliga_summary_stats[7*i-2]
+  bundesliga_summary[i,5] <- bundesliga_summary_stats[7*i-1]
+  bundesliga_summary[i,6] <- bundesliga_summary_stats[7*i]
+  bundesliga_summary[i,7] <- bundesliga_summary_stats[7*i+1]
+}
+bundesliga_summary <- bundesliga_summary %>%
+  mutate(points = as.numeric(points),
+         wins = as.numeric(wins),
+         draws = as.numeric(draws),
+         losses = as.numeric(losses),
+         goals_for = as.numeric(goals_for),
+         goals_against = as.numeric(goals_against),
+         games_played = wins+draws+losses,
+         club = str_remove_all(club, '("|\\r\\n\\s*)'))
+
+bundesliga <- left_join(bundesliga_summary, bundesliga_salary)
+```
+
+
+```{r Final_df}
+final_df <- rbind(mls, LaLiga, Ligue1, SerieA, epl, bundesliga) #in $100,000 USD per year
+#left_join(final_df, Spain_last)
+
+final_sorta <- read_csv("final_sorta3.csv") %>%
+  select(-R) %>%
+  mutate(club = str_replace(club, "Columbus Crew", "Columbus Crew SC"),
+         club = str_replace(club, "DC United", "D.C. United"),
+         club = str_replace(club, "Minnesota United", "Minnesota United FC"),
+         club = str_replace(club, "New England Rev.", "New England Revolution"),
+         club = str_replace(club, "Orlando City", "Orlando City SC"),
+         club = str_replace(club, "Vancouver Whitecaps", "Vancouver Whitecaps FC"),
+         club = str_replace(club, "FC Cologne", "FC Köln"))
+
+maybe_final <- left_join(final_df, final_sorta)
+maybe_final <- maybe_final %>%
+  mutate(prop_shots_on = shots_on/shots,
+         goals_pg = goals/games_played)
+write_csv(maybe_final, "soccer_data.csv")
+
+```
